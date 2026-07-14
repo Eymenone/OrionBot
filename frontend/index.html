@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OrionBot</title>
+<link rel="icon" href="orion-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#121118;font-family:'Manrope',system-ui,sans-serif;overflow:hidden}
+*{box-sizing:border-box}
+a{color:#c9b3ff}a:hover{color:#e0d3ff}
+button{font-family:inherit}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#2a2833;border-radius:3px}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes shimmerMove{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+.hidden{display:none !important}
+.grad-text{background:linear-gradient(120deg,#7ef29a,#9b6bff 52%,#ff3fce);-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad-bg{background:linear-gradient(120deg,#7ef29a,#9b6bff 52%,#ff3fce)}
+.mono{font-family:'JetBrains Mono',monospace}
+.thinking-shimmer{background:linear-gradient(120deg,#7ef29a,#9b6bff,#ff3fce,#7ef29a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shimmerMove 1.6s linear infinite}
+input,textarea{font-family:inherit}
+</style>
+</head>
+<body>
+
+<div id="app" style="width:100vw;height:100vh;background:#121118;color:#e8e6ef;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+
+  <div id="screen-setup" class="hidden" style="flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% -5%,rgba(155,107,255,.12),transparent 55%);padding:30px;overflow-y:auto;">
+    <form id="setup-form" style="width:860px;max-width:100%;background:#1a1922;border:1px solid #2a2833;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.55);overflow:hidden;display:flex;flex-direction:column;">
+      <div style="padding:20px 26px;display:flex;align-items:center;gap:14px;border-bottom:1px solid #2a2833;">
+        <img src="orion-logo.png" alt="OrionBot" style="width:42px;height:42px;border-radius:11px;object-fit:cover;box-shadow:0 4px 16px rgba(155,107,255,.35);"/>
+        <div style="flex:1;">
+          <div class="grad-text" style="font-size:18px;font-weight:800;letter-spacing:-.01em;">Ayarlar</div>
+          <div style="font-size:12px;color:#8b879a;margin-top:1px;">Sağlayıcı, bağlantı ve izinleri yönetin</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:stretch;">
+        <div style="width:290px;flex:none;border-right:1px solid #2a2833;padding:20px 18px;display:flex;flex-direction:column;gap:8px;">
+          <label class="mono" style="font-size:10.5px;color:#8b879a;letter-spacing:.04em;">BAĞLANTI YÖNTEMİ</label>
+          <div id="mode-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+        <div style="flex:1;min-width:0;padding:20px 24px;display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <label class="mono" style="font-size:10.5px;color:#8b879a;letter-spacing:.04em;">BAĞLANTI</label>
+
+            <div id="mode-apikey">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <label class="mono" style="font-size:11px;color:#8b879a;">api_key</label>
+                <input id="inp-apikey" type="password" class="mono" placeholder="sk-ant-... . sk-or-... . nvapi-..." style="background:#121118;border:1px solid #2a2833;border-radius:10px;padding:11px 13px;color:#e8e6ef;font-size:13px;outline:none;width:100%;"/>
+                <div style="display:flex;align-items:center;gap:8px;padding:2px 2px 0;">
+                  <span class="mono" style="font-size:10.5px;color:#8b879a;">algılanan sağlayıcı:</span>
+                  <span id="detect-label" style="font-size:11.5px;font-weight:700;color:#8b879a;">anahtar bekleniyor...</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">
+                <label class="mono" style="font-size:11px;color:#8b879a;">model <span style="opacity:.7;">(opsiyonel)</span></label>
+                <input id="inp-model" class="mono" placeholder="boş bırakılırsa otomatik seçilir" style="background:#121118;border:1px solid #2a2833;border-radius:10px;padding:11px 13px;color:#e8e6ef;font-size:13px;outline:none;width:100%;"/>
+              </div>
+            </div>
+
+            <div id="mode-local" class="hidden">
+              <div style="display:flex;gap:12px;">
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                  <label class="mono" style="font-size:11px;color:#8b879a;">base_url</label>
+                  <input id="inp-baseurl" class="mono" placeholder="http://localhost:11434" style="background:#121118;border:1px solid #2a2833;border-radius:10px;padding:11px 13px;color:#e8e6ef;font-size:13px;outline:none;width:100%;"/>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                  <label class="mono" style="font-size:11px;color:#8b879a;">model</label>
+                  <input id="inp-localmodel" class="mono" placeholder="llama3.1" style="background:#121118;border:1px solid #2a2833;border-radius:10px;padding:11px 13px;color:#e8e6ef;font-size:13px;outline:none;width:100%;"/>
+                </div>
+              </div>
+              <div style="font-size:10.5px;color:#7d7890;line-height:1.4;margin-top:8px;">Anahtar gerekmez — model cihazınızda ya da yerel ağınızda çalışır.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <label class="mono" style="font-size:10.5px;color:#8b879a;letter-spacing:.04em;">İZİNLER</label>
+            <div id="perms-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+            <div id="cmdfilter-box" style="padding:12px 13px;background:#121118;border:1px solid #2a2833;border-radius:10px;display:flex;flex-direction:column;gap:10px;">
+              <div>
+                <div style="font-size:12px;color:#e8e6ef;">Onay gerektiren komutlar</div>
+                <div style="font-size:10px;color:#8b879a;margin-top:3px;line-height:1.4;">Zararlı komut filtresi açıkken bu komutlar çalıştırılmadan önce onayınız istenir. Yazıp Enter'a basın.</div>
+              </div>
+              <div id="blocked-cmds" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+              <div style="display:flex;gap:8px;">
+                <input id="inp-cmd" class="mono" placeholder="örn. rm, sudo, dd, git push --force" style="flex:1;background:#0f0e15;border:1px solid #2a2833;border-radius:8px;padding:9px 12px;color:#e8e6ef;font-size:12px;outline:none;min-width:0;"/>
+                <button type="button" id="btn-addcmd" style="padding:9px 16px;border-radius:8px;border:1px solid #322f42;background:#1f1e29;color:#e8e6ef;font-size:12px;cursor:pointer;flex:none;">Ekle</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #2a2833;display:flex;justify-content:flex-end;">
+        <button type="submit" class="grad-bg" style="padding:12px 26px;border-radius:10px;border:none;color:#12111a;font-size:14px;font-weight:800;cursor:pointer;">Kaydet ve Başlat</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="confirm-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(18,17,24,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;">
+    <div style="background:#1a1922;border:1px solid #eab308;border-radius:12px;padding:22px 24px;width:440px;">
+      <div style="font-size:13px;color:#eab308;margin-bottom:10px;">Terminal komutu çalıştırmak istiyor</div>
+      <div id="confirm-cmd" class="mono" style="font-size:13px;color:#9be3a8;background:#0f0e15;padding:10px 14px;border-radius:8px;margin-bottom:16px;word-break:break-all;"></div>
+      <div style="display:flex;gap:10px;">
+        <button id="btn-confirm-yes" style="flex:1;padding:10px;border:none;border-radius:8px;background:#22c55e;color:#0f0e15;font-weight:700;cursor:pointer;">Çalıştır</button>
+        <button id="btn-confirm-no" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ef4444;color:white;font-weight:700;cursor:pointer;">Reddet</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-main" class="hidden" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+    <div style="display:flex;align-items:center;gap:11px;padding:0 16px;border-bottom:1px solid #2a2833;background:#17161f;height:44px;flex:none;">
+      <img src="orion-logo.png" alt="OrionBot" style="width:24px;height:24px;border-radius:7px;object-fit:cover;"/>
+      <div id="model-active" class="mono" style="font-size:12px;color:#a7a2b8;"></div>
+      <div style="flex:1;"></div>
+      <button id="btn-settings" aria-label="Ayarlar" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid #2a2833;background:transparent;color:#a7a2b8;cursor:pointer;font-size:15px;">⚙</button>
+    </div>
+    <div style="flex:1;display:flex;min-height:0;">
+
+      <div style="width:262px;flex:none;background:#17161f;border-right:1px solid #2a2833;padding:18px;display:flex;flex-direction:column;gap:16px;overflow:hidden;">
+        <div style="flex:none;">
+          <div id="clock" class="grad-text" style="font-size:30px;font-weight:700;"></div>
+          <div id="date-str" style="font-size:11.5px;color:#8b879a;margin-top:1px;"></div>
+        </div>
+
+        <div style="flex:none;">
+          <button id="btn-toggle-vault" style="width:100%;text-align:left;background:transparent;border:none;padding:0;margin-bottom:8px;cursor:pointer;font-size:10.5px;color:#8b879a;display:flex;align-items:center;gap:6px;" class="mono">
+            <span id="vault-arrow" style="width:10px;display:inline-block;">▾</span>notlar (<span id="vault-count">0</span>)
+          </button>
+          <div id="vault-list" style="display:flex;flex-direction:column;gap:2px;"></div>
+        </div>
+
+        <div style="flex:none;">
+          <button id="btn-toggle-sys" style="width:100%;text-align:left;background:transparent;border:none;padding:0;margin-bottom:9px;cursor:pointer;font-size:10.5px;color:#8b879a;display:flex;align-items:center;gap:6px;" class="mono">
+            <span id="sys-arrow" style="width:10px;display:inline-block;">▾</span>sistem
+          </button>
+          <div id="sys-body" style="display:flex;flex-direction:column;gap:10px;">
+            <div>
+              <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;color:#8b879a;margin-bottom:4px;"><span>cpu</span><span id="cpu-val">0%</span></div>
+              <div style="height:5px;background:#2a2833;border-radius:3px;overflow:hidden;"><div id="cpu-bar" style="height:100%;width:0%;"></div></div>
+            </div>
+            <div>
+              <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;color:#8b879a;margin-bottom:4px;"><span>ram</span><span id="ram-val">0%</span></div>
+              <div style="height:5px;background:#2a2833;border-radius:3px;overflow:hidden;"><div id="ram-bar" style="height:100%;width:0%;"></div></div>
+            </div>
+            <div>
+              <div class="mono" style="display:flex;justify-content:space-between;font-size:11px;color:#8b879a;margin-bottom:4px;"><span>disk</span><span id="disk-val">0%</span></div>
+              <div style="height:5px;background:#2a2833;border-radius:3px;overflow:hidden;"><div id="disk-bar" style="height:100%;width:0%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span class="mono" style="font-size:10.5px;color:#8b879a;">sohbetler (<span id="chat-count">0</span>)</span>
+            <button id="btn-new-chat" aria-label="Yeni sohbet" style="width:22px;height:22px;border-radius:6px;border:1px solid #2a2833;background:transparent;color:#a7a2b8;cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;">+</button>
+          </div>
+          <div id="chat-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin:0 -6px;padding:0 6px;"></div>
+        </div>
+
+        <div style="flex:none;padding-top:12px;border-top:1px solid #2a2833;">
+          <div style="font-size:10px;color:#7d7890;line-height:1.4;">OrionBot v0.6</div>
+        </div>
+      </div>
+
+      <div style="width:48px;flex:none;background:#17161f;border-right:1px solid #2a2833;display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px;">
+        <label aria-label="Ekle" style="width:34px;height:34px;border-radius:9px;border:1px solid #2a2833;background:transparent;color:#a7a2b8;cursor:pointer;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;">+
+          <input id="attach-file-input" type="file" multiple accept="image/*,.pdf,.md,.txt,.zip,.json,.csv,.docx" style="display:none;"/>
+        </label>
+        <button id="btn-skills" aria-label="Skills" style="width:34px;height:34px;border-radius:9px;border:1px solid #2a2833;background:transparent;color:#a7a2b8;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 3.5h9.5a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6z"></path>
+            <path d="M6 3.5A1.5 1.5 0 0 0 4.5 5v14A1.5 1.5 0 0 0 6 20.5"></path>
+            <path d="M4.5 8H7M4.5 12H7M4.5 16H7"></path>
+            <path d="M20.5 4.2c-3.4.7-6 3.3-6.7 6.7l-.5 2.4 2.4-.5c3.4-.7 6-3.3 6.7-6.7z" fill="currentColor" fill-opacity="0.22"></path>
+            <path d="M13.3 13.3 12 14.6"></path>
+          </svg>
+          <span id="skills-badge" class="mono hidden" style="position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:linear-gradient(120deg,#7ef29a,#9b6bff 60%,#ff3fce);color:#12111a;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;"></span>
+        </button>
+      </div>
+
+      <div id="skills-panel" class="hidden" style="width:288px;flex:none;background:#17161f;border-right:1px solid #2a2833;display:flex;flex-direction:column;min-height:0;">
+        <div style="padding:16px 16px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid #2a2833;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9b3ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;">
+            <path d="M6 3.5h9.5a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H6z"></path>
+            <path d="M6 3.5A1.5 1.5 0 0 0 4.5 5v14A1.5 1.5 0 0 0 6 20.5"></path>
+            <path d="M4.5 8H7M4.5 12H7M4.5 16H7"></path>
+            <path d="M20.5 4.2c-3.4.7-6 3.3-6.7 6.7l-.5 2.4 2.4-.5c3.4-.7 6-3.3 6.7-6.7z" fill="#c9b3ff" fill-opacity="0.22"></path>
+            <path d="M13.3 13.3 12 14.6"></path>
+          </svg>
+          <div style="flex:1;">
+            <div style="font-size:13.5px;font-weight:700;color:#e8e6ef;">Skills</div>
+            <div id="skills-count-label" style="font-size:10.5px;color:#8b879a;">0 yüklü yetenek</div>
+          </div>
+          <button id="btn-skills-close" aria-label="Kapat" style="width:24px;height:24px;border-radius:6px;border:none;background:transparent;color:#8b879a;cursor:pointer;font-size:15px;">×</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;">
+          <label id="skill-dropzone" style="border:1.5px dashed #2a2833;background:#121118;border-radius:12px;padding:20px 14px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;cursor:pointer;transition:background .12s,border-color .12s;">
+            <div style="font-size:22px;opacity:.9;">⬇</div>
+            <div style="font-size:12px;color:#e8e6ef;font-weight:600;">Skill dosyasını sürükleyin</div>
+            <div style="font-size:10.5px;color:#8b879a;line-height:1.4;">ya da tıklayıp seçin · .zip / .md / .py</div>
+            <input id="skill-file-input" type="file" multiple accept=".zip,.md,.py,.js" style="display:none;"/>
+          </label>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <label class="mono" style="font-size:10.5px;color:#8b879a;letter-spacing:.04em;">REPO LİNKİ</label>
+            <div style="display:flex;gap:7px;">
+              <input id="skill-repo-input" class="mono" placeholder="github.com/kullanici/skill" style="flex:1;min-width:0;background:#121118;border:1px solid #2a2833;border-radius:9px;padding:9px 11px;color:#e8e6ef;font-size:11.5px;outline:none;"/>
+              <button id="btn-skill-addrepo" class="grad-bg" style="padding:0 14px;border-radius:9px;border:none;cursor:pointer;color:#12111a;font-size:12px;font-weight:700;flex:none;">Ekle</button>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <label class="mono" style="font-size:10.5px;color:#8b879a;letter-spacing:.04em;">YÜKLÜ SKILLS</label>
+            <div id="skills-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+        <div id="chat-log" style="flex:1;overflow-y:auto;padding:26px 40px;display:flex;flex-direction:column;gap:20px;"></div>
+
+        <div style="padding:16px 40px 22px;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:10px;align-items:flex-end;background:#1a1922;border:1px solid #2a2833;border-radius:16px;padding:7px 7px 7px 16px;">
+            <span class="mono grad-text" style="font-size:13px;padding-bottom:11px;">›</span>
+            <textarea id="chat-input" placeholder="OrionBot'a yazın ya da bir komut isteyin..." rows="1" style="flex:1;resize:none;background:transparent;border:none;padding:9px 0;color:#e8e6ef;font-size:14.5px;outline:none;max-height:100px;"></textarea>
+            <button id="btn-send" class="grad-bg" style="width:38px;height:38px;border-radius:12px;border:none;color:#12111a;font-size:16px;cursor:pointer;flex:none;font-weight:700;">↑</button>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;">
+            <button id="btn-allow-toggle" class="mono" style="padding:5px 12px;border-radius:8px;border:1px solid #2a2833;background:transparent;color:#8b879a;font-size:11px;cursor:pointer;">⚡ İzin: Kapalı</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const GRAD = 'linear-gradient(120deg,#7ef29a,#9b6bff 52%,#ff3fce)';
+
+const MODES = [
+  { id: 'apikey', label: 'API Anahtarı', desc: 'Anahtarı yapıştırın, sağlayıcı otomatik algılanır', disabled: false },
+  { id: 'local',  label: 'Yerel model',  desc: "Ollama, LM Studio ya da kendi endpoint'iniz", disabled: false },
+  { id: 'kortex', label: 'Kortex', badge: 'YAKINDA', desc: "OrionAGI'ın yeni ürettiği sistem: az yük, çok zeka, çok üretkenlik", disabled: true },
+];
+
+const KEY_PATTERNS = [
+  { prefix: 'sk-ant-',   label: 'Anthropic',  color: '#7ef29a' },
+  { prefix: 'sk-or-',    label: 'OpenRouter', color: '#7ef29a' },
+  { prefix: 'nvapi-',    label: 'NVIDIA',     color: '#7ef29a' },
+  { prefix: 'sk-',       label: 'OpenAI',     color: '#7ef29a' },
+];
+
+function detectProvider(key) {
+  const k = (key || '').trim();
+  if (!k) return { label: 'anahtar bekleniyor...', color: '#8b879a' };
+  for (const p of KEY_PATTERNS) {
+    if (k.toLowerCase().startsWith(p.prefix)) return p;
+  }
+  return { label: 'Özel sağlayıcı', color: '#c9b3ff' };
+}
+
+const PERM_DEFS = [
+  { key: 'vaultWrite', label: 'Notlara yazma izni',       desc: 'Notları kaydedip düzenleyebilir' },
+  { key: 'fileAccess',  label: 'Dosya sistemine erişim',   desc: 'Yerel dosyaları okuyup yazabilir' },
+  { key: 'network',     label: 'Ağ erişimi',               desc: 'İnternetten içerik alabilir' },
+  { key: 'cmdFilter',   label: 'Zararlı komut filtresi',   desc: 'rm gibi riskli komutlardan önce onay ister' },
+];
+
+const state = {
+  mode: 'apikey',
+  perms: { vaultWrite: true, fileAccess: true, network: true, cmdFilter: true },
+  blockedCmds: ['rm', 'sudo', 'dd'],
+  allowAll: false,
+  pendingCmd: null,
+  activeChatId: null,
+  vaultOpen: true,
+  sysOpen: true,
+};
+
+const API = {
+  async getConfig() { return await pywebview.api.get_config(); },
+  async saveConfigAuto(apiKey, model) { return await pywebview.api.save_config_auto(apiKey, model); },
+  async saveConfigLocal(backend, model, baseUrl) { return await pywebview.api.save_config_local(backend, model, baseUrl); },
+  async ask(text) { return await pywebview.api.ask(text); },
+  async confirmCommand(cmd) { return await pywebview.api.confirm_command(cmd); },
+  async getVault() { return await pywebview.api.get_vault(); },
+  async getSkills() { return await pywebview.api.get_skills(); },
+  async addSkillRepo(url) { return await pywebview.api.add_skill_repo(url); },
+  async toggleSkill(name, on) { return await pywebview.api.toggle_skill(name, on); },
+  async removeSkill(name) { return await pywebview.api.remove_skill(name); },
+  async uploadSkillFiles(files) {
+    const encoded = [];
+    for (const f of files) {
+      const buf = await f.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      encoded.push({ name: f.name, data: b64 });
+    }
+    return await pywebview.api.upload_skill_files(encoded);
+  },
+  async getStats() { return await pywebview.api.get_stats(); },
+  async toggleAllow() { return await pywebview.api.toggle_allow(); },
+  async newChat() { return await pywebview.api.new_chat(); },
+  async selectChat(cid) { return await pywebview.api.select_chat(cid); },
+  async getChats() { return await pywebview.api.get_chats(); },
+  async starChat(cid, starred) { return await pywebview.api.star_chat(cid, starred); },
+  async removeChat(cid) { return await pywebview.api.remove_chat(cid); },
+};
+
+function renderModeList() {
+  const el = document.getElementById('mode-list');
+  el.innerHTML = '';
+  MODES.forEach(m => {
+    const selected = state.mode === m.id;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.disabled = m.disabled;
+    const opacity = m.disabled ? '0.5' : '1';
+    btn.style.cssText = `text-align:left;padding:12px 13px;border-radius:10px;border:1px solid ${selected ? '#9b6bff' : '#2a2833'};background:${selected ? 'rgba(155,107,255,.16)' : '#1a1922'};cursor:${m.disabled ? 'not-allowed' : 'pointer'};display:flex;flex-direction:column;gap:4px;opacity:${opacity};`;
+    const badge = m.badge
+      ? `<span style="font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;background:${m.disabled ? '#3a3550' : GRAD};color:${m.disabled ? '#8b879a' : '#12111a'};font-family:'JetBrains Mono',monospace;letter-spacing:.03em;">${m.badge}</span>`
+      : '';
+    btn.innerHTML = `
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:13px;color:${selected ? '#c9b3ff' : '#e8e6ef'};font-weight:600;">${m.label}</span>
+        ${badge}
+      </div>
+      <span style="font-size:10.5px;color:#8b879a;line-height:1.4;">${m.desc}</span>`;
+    if (!m.disabled) {
+      btn.onclick = () => { state.mode = m.id; renderModeList(); updateModeVisibility(); };
+    }
+    el.appendChild(btn);
+  });
+}
+
+function updateModeVisibility() {
+  document.getElementById('mode-apikey').classList.toggle('hidden', state.mode !== 'apikey');
+  document.getElementById('mode-local').classList.toggle('hidden', state.mode !== 'local');
+}
+
+document.getElementById('inp-apikey').addEventListener('input', e => {
+  const d = detectProvider(e.target.value);
+  const lbl = document.getElementById('detect-label');
+  lbl.textContent = d.label;
+  lbl.style.color = d.color;
+});
+
+function renderPerms() {
+  const el = document.getElementById('perms-grid');
+  el.innerHTML = '';
+  PERM_DEFS.forEach(d => {
+    const on = !!state.perms[d.key];
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:11px 12px;background:#121118;border:1px solid #2a2833;border-radius:10px;';
+    row.innerHTML = `
+      <div style="min-width:0;">
+        <div style="font-size:12px;color:#e8e6ef;line-height:1.3;">${d.label}</div>
+        <div style="font-size:10px;color:#8b879a;margin-top:3px;line-height:1.35;">${d.desc}</div>
+      </div>
+      <button type="button" style="width:36px;height:21px;border-radius:11px;border:none;cursor:pointer;position:relative;background:${on ? GRAD : '#2a2833'};flex:none;">
+        <span style="position:absolute;top:2px;left:${on ? '18px' : '2px'};width:17px;height:17px;border-radius:50%;background:#fff;transition:left .15s;"></span>
+      </button>`;
+    row.querySelector('button').onclick = () => {
+      state.perms[d.key] = !state.perms[d.key];
+      renderPerms();
+      document.getElementById('cmdfilter-box').style.display = state.perms.cmdFilter ? 'flex' : 'none';
+    };
+    el.appendChild(row);
+  });
+  document.getElementById('cmdfilter-box').style.display = state.perms.cmdFilter ? 'flex' : 'none';
+}
+
+function renderBlockedCmds() {
+  const el = document.getElementById('blocked-cmds');
+  el.innerHTML = '';
+  state.blockedCmds.forEach(cmd => {
+    const span = document.createElement('span');
+    span.className = 'mono';
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 9px;border-radius:7px;background:#1f1e29;border:1px solid #322f42;font-size:11.5px;color:#e8e6ef;';
+    span.innerHTML = `${cmd} <button type="button" style="border:none;background:transparent;color:#8b879a;cursor:pointer;font-size:14px;line-height:1;padding:0;">×</button>`;
+    span.querySelector('button').onclick = () => {
+      state.blockedCmds = state.blockedCmds.filter(c => c !== cmd);
+      renderBlockedCmds();
+    };
+    el.appendChild(span);
+  });
+}
+
+document.getElementById('btn-addcmd').onclick = () => {
+  const inp = document.getElementById('inp-cmd');
+  const val = inp.value.trim();
+  if (val && !state.blockedCmds.includes(val)) {
+    state.blockedCmds.push(val);
+    inp.value = '';
+    renderBlockedCmds();
+  }
+};
+document.getElementById('inp-cmd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-addcmd').click(); }
+});
+
+document.getElementById('setup-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  let label, model;
+
+  if (state.mode === 'local') {
+    const baseUrl = document.getElementById('inp-baseurl').value.trim() || 'http://localhost:11434/api/chat';
+    model = document.getElementById('inp-localmodel').value.trim() || 'llama3.1';
+    await API.saveConfigLocal('ollama', model, baseUrl);
+    label = 'Yerel';
+  } else {
+    const apiKey = document.getElementById('inp-apikey').value.trim();
+    const d = detectProvider(apiKey);
+    model = document.getElementById('inp-model').value.trim() || 'otomatik model';
+    await API.saveConfigAuto(apiKey, model);
+    label = d.label !== 'anahtar bekleniyor...' ? d.label : 'API';
+  }
+
+  document.getElementById('model-active').textContent = `${label} · ${model}`;
+  document.getElementById('screen-setup').classList.add('hidden');
+  document.getElementById('screen-main').classList.remove('hidden');
+  await startMainScreen();
+});
+
+document.getElementById('btn-settings').onclick = () => {
+  document.getElementById('screen-main').classList.add('hidden');
+  document.getElementById('screen-setup').classList.remove('hidden');
+};
+
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  document.getElementById('date-str').textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
+}
+
+document.getElementById('btn-toggle-vault').onclick = () => {
+  state.vaultOpen = !state.vaultOpen;
+  document.getElementById('vault-arrow').textContent = state.vaultOpen ? '▾' : '▸';
+  document.getElementById('vault-list').classList.toggle('hidden', !state.vaultOpen);
+};
+document.getElementById('btn-toggle-sys').onclick = () => {
+  state.sysOpen = !state.sysOpen;
+  document.getElementById('sys-arrow').textContent = state.sysOpen ? '▾' : '▸';
+  document.getElementById('sys-body').classList.toggle('hidden', !state.sysOpen);
+};
+
+async function refreshVault() {
+  try {
+    const data = await API.getVault();
+    const list = data.notes || [];
+    document.getElementById('vault-count').textContent = list.length;
+    const el = document.getElementById('vault-list');
+    el.innerHTML = '';
+    list.slice(0, 8).forEach(note => {
+      const row = document.createElement('div');
+      row.style.cssText = 'padding:6px 8px;border-radius:6px;display:flex;align-items:center;gap:8px;';
+      const tag = (note.etiketler && note.etiketler[0]) || '';
+      row.innerHTML = `
+        <span style="width:6px;height:6px;border-radius:50%;background:${GRAD};display:inline-block;flex:none;"></span>
+        <div style="min-width:0;">
+          <div style="font-size:12px;color:#d6d2e2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(note.baslik || note.dosya)}</div>
+          <div style="font-size:10px;color:#7d7890;">#${escapeHtml(tag)}</div>
+        </div>`;
+      el.appendChild(row);
+    });
+  } catch (e) { console.warn('vault fetch failed', e); }
+}
+
+async function refreshChats() {
+  try {
+    const data = await API.getChats();
+    const chats = data.chats || [];
+    document.getElementById('chat-count').textContent = chats.length;
+    const el = document.getElementById('chat-list');
+    el.innerHTML = '';
+    chats.forEach(c => {
+      const active = c.id === state.activeChatId;
+      const row = document.createElement('div');
+      row.style.cssText = `padding:8px 9px;border-radius:8px;background:${active ? 'rgba(155,107,255,.14)' : 'transparent'};border:1px solid ${active ? '#3a3550' : 'transparent'};cursor:pointer;display:flex;align-items:center;gap:8px;`;
+      const starIcon = c.starred ? '★' : '☆';
+      const starColor = c.starred ? '#ffd166' : '#5c586b';
+      const titleColor = active ? '#e8e6ef' : '#c1bcce';
+      row.innerHTML = `
+        <button aria-label="Yıldızla" style="background:transparent;border:none;padding:0;cursor:pointer;color:${starColor};font-size:13px;line-height:1;flex:none;">${starIcon}</button>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12.5px;color:${titleColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.title)}</div>
+        </div>
+        <span class="mono" style="font-size:10px;color:#5c586b;flex:none;">${relativeTime(c.updated)}</span>`;
+      row.querySelector('button').onclick = async (ev) => {
+        ev.stopPropagation();
+        await API.starChat(c.id, !c.starred);
+        refreshChats();
+      };
+      row.onclick = () => selectChat(c.id);
+      el.appendChild(row);
+    });
+  } catch (e) { console.warn('chats fetch failed', e); }
+}
+
+async function selectChat(cid) {
+  state.activeChatId = cid;
+  const res = await API.selectChat(cid);
+  renderChatMessages(res.messages || []);
+  refreshChats();
+}
+
+function renderChatMessages(messages) {
+  const el = document.getElementById('chat-log');
+  el.innerHTML = '';
+  messages.forEach(m => {
+    if (m.role === 'user') addUserMsg(m.text, false);
+    else if (m.role === 'ai') addAiMsg(m.text, false);
+    else if (m.role === 'command') addCmdMsg(m.text, m.output, false);
+    else if (m.role === 'vault') addVaultMsg(m.text.replace(/^Not kaydedildi:\s*/, ''), false);
+  });
+  el.scrollTop = el.scrollHeight;
+}
+
+function relativeTime(updated) {
+  if (!updated) return '';
+  try {
+    const d = new Date(updated.replace(' ', 'T'));
+    const diffMs = Date.now() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return 'şimdi';
+    if (diffMin < 60) return `${diffMin}dk`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `${diffH}sa`;
+    const diffD = Math.floor(diffH / 24);
+    return `${diffD}g`;
+  } catch (e) { return ''; }
+}
+
+document.getElementById('btn-new-chat').onclick = async () => {
+  const res = await API.newChat();
+  state.activeChatId = res.id;
+  document.getElementById('chat-log').innerHTML = '';
+  refreshChats();
+};
+
+async function refreshSkills() {
+  try {
+    const data = await API.getSkills();
+    const list = data.skills || [];
+    const badge = document.getElementById('skills-badge');
+    if (list.length > 0) { badge.textContent = list.length; badge.classList.remove('hidden'); }
+    else { badge.classList.add('hidden'); }
+    document.getElementById('skills-count-label').textContent = `${list.length} yüklü yetenek`;
+
+    const el = document.getElementById('skills-list');
+    el.innerHTML = '';
+    const sourceIcon = { repo: '⑃', dosya: '◈', yerel: '◆' };
+    list.forEach(sk => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 11px;background:#1a1922;border:1px solid #2a2833;border-radius:10px;';
+      row.innerHTML = `
+        <span style="color:${sk.on ? '#7ef29a' : '#4a4757'};font-size:9px;">●</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12.5px;color:#e8e6ef;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(sk.name)}</div>
+          <div class="mono" style="font-size:10px;color:#8b879a;">${sourceIcon[sk.source]||'◆'} ${sk.source}</div>
+        </div>
+        <button data-name="${escapeHtml(sk.name)}" data-on="${sk.on}" class="skill-toggle-btn" style="width:32px;height:19px;border-radius:10px;border:none;cursor:pointer;position:relative;background:${sk.on ? GRAD : '#2a2833'};flex:none;">
+          <span style="position:absolute;top:2px;left:${sk.on ? '15px' : '2px'};width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s;"></span>
+        </button>
+        <button data-name="${escapeHtml(sk.name)}" class="skill-remove-btn" style="border:none;background:transparent;color:#8b879a;cursor:pointer;font-size:15px;line-height:1;padding:0;">×</button>`;
+      el.appendChild(row);
+    });
+    el.querySelectorAll('.skill-toggle-btn').forEach(btn => {
+      btn.onclick = async () => {
+        await API.toggleSkill(btn.dataset.name, btn.dataset.on !== 'true');
+        refreshSkills();
+      };
+    });
+    el.querySelectorAll('.skill-remove-btn').forEach(btn => {
+      btn.onclick = async () => { await API.removeSkill(btn.dataset.name); refreshSkills(); };
+    });
+  } catch (e) { console.warn('skills fetch failed', e); }
+}
+
+document.getElementById('btn-skills').onclick = () => {
+  document.getElementById('skills-panel').classList.remove('hidden');
+  refreshSkills();
+};
+document.getElementById('btn-skills-close').onclick = () => {
+  document.getElementById('skills-panel').classList.add('hidden');
+};
+
+document.getElementById('attach-file-input').addEventListener('change', e => {
+  const files = e.target.files;
+  if (!files || !files.length) return;
+  const names = Array.from(files).map(f => f.name).join(', ');
+  addUserMsg('📎 ' + names);
+  e.target.value = '';
+});
+
+document.getElementById('btn-skill-addrepo').onclick = async () => {
+  const inp = document.getElementById('skill-repo-input');
+  const url = inp.value.trim();
+  if (!url) return;
+  inp.value = '';
+  await API.addSkillRepo(url);
+  refreshSkills();
+};
+document.getElementById('skill-repo-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-skill-addrepo').click(); }
+});
+
+async function handleSkillFiles(files) {
+  if (!files || !files.length) return;
+  await API.uploadSkillFiles(files);
+  refreshSkills();
+}
+document.getElementById('skill-file-input').addEventListener('change', e => handleSkillFiles(e.target.files));
+
+const dropzone = document.getElementById('skill-dropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.style.background = 'rgba(155,107,255,.12)'; dropzone.style.borderColor = '#9b6bff'; });
+dropzone.addEventListener('dragleave', e => { e.preventDefault(); dropzone.style.background = '#121118'; dropzone.style.borderColor = '#2a2833'; });
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.style.background = '#121118'; dropzone.style.borderColor = '#2a2833';
+  if (e.dataTransfer.files && e.dataTransfer.files.length) { handleSkillFiles(e.dataTransfer.files); return; }
+  const txt = e.dataTransfer.getData('text');
+  if (txt) { document.getElementById('skill-repo-input').value = txt; document.getElementById('btn-skill-addrepo').click(); }
+});
+
+function escapeHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function addUserMsg(text, scroll = true) {
+  const el = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.style.cssText = 'align-self:flex-end;max-width:74%;background:#232130;border:1px solid #322f42;color:#e8e6ef;padding:11px 15px;border-radius:14px;font-size:14.5px;line-height:1.6;';
+  div.textContent = text;
+  el.appendChild(div);
+  if (scroll) el.scrollTop = el.scrollHeight;
+}
+
+function addAiMsg(text, scroll = true) {
+  const el = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.style.cssText = 'align-self:flex-start;max-width:82%;display:flex;gap:12px;';
+  div.innerHTML = `
+    <img src="orion-logo.png" alt="" style="width:26px;height:26px;border-radius:8px;object-fit:cover;flex:none;margin-top:2px;"/>
+    <div>
+      <div class="grad-text" style="font-size:12px;font-weight:700;margin-bottom:4px;">OrionBot</div>
+      <div style="color:#e8e6ef;font-size:14.5px;line-height:1.68;white-space:pre-wrap;">${escapeHtml(text)}</div>
+    </div>`;
+  el.appendChild(div);
+  if (scroll) el.scrollTop = el.scrollHeight;
+}
+
+function addCmdMsg(cmd, output, scroll = true) {
+  const el = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'mono';
+  div.style.cssText = 'align-self:flex-start;max-width:82%;background:#0f0e15;border:1px solid #262433;border-radius:10px;overflow:hidden;margin-left:38px;';
+  div.innerHTML = `
+    <div style="padding:8px 14px;border-bottom:1px solid #262433;font-size:11px;color:#7d7890;display:flex;gap:7px;align-items:center;">
+      <span style="width:7px;height:7px;border-radius:50%;background:${GRAD};display:inline-block;"></span>komut
+    </div>
+    <div style="padding:11px 14px;font-size:12.5px;">
+      <div style="color:#9be3a8;">$ ${escapeHtml(cmd)}</div>
+      <div style="color:#8b879a;white-space:pre-wrap;margin-top:5px;">${escapeHtml(output || '')}</div>
+    </div>`;
+  el.appendChild(div);
+  if (scroll) el.scrollTop = el.scrollHeight;
+}
+
+function addVaultMsg(text, scroll = true) {
+  const el = document.getElementById('chat-log');
+  const div = document.createElement('div');
+  div.className = 'mono';
+  div.style.cssText = 'align-self:flex-start;font-size:12.5px;color:#9be3a8;background:rgba(126,242,154,.09);border:1px solid rgba(126,242,154,.22);padding:8px 14px;border-radius:9px;margin-left:38px;';
+  div.textContent = '✓ ' + text;
+  el.appendChild(div);
+  if (scroll) el.scrollTop = el.scrollHeight;
+}
+
+let thinkingEl = null;
+function showThinking() {
+  const el = document.getElementById('chat-log');
+  thinkingEl = document.createElement('div');
+  thinkingEl.style.cssText = 'align-self:flex-start;display:flex;gap:12px;align-items:center;';
+  thinkingEl.innerHTML = `<img src="orion-logo.png" alt="" style="width:26px;height:26px;border-radius:8px;object-fit:cover;flex:none;"/><span class="thinking-shimmer" style="font-size:14.5px;font-weight:700;">Düşünüyor...</span>`;
+  el.appendChild(thinkingEl);
+  el.scrollTop = el.scrollHeight;
+}
+function hideThinking() { if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; } }
+
+async function sendMessage() {
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ''; inp.style.height = 'auto';
+  addUserMsg(text);
+  showThinking();
+
+  try {
+    const data = await API.ask(text);
+    hideThinking();
+    if (data.reply) addAiMsg(data.reply);
+    if (data.command) {
+      if (state.allowAll) addCmdMsg(data.command, data.command_output || '');
+      else showConfirm(data.command);
+    }
+    if (data.vault_file) addVaultMsg(`Not kaydedildi: ${data.vault_file}`);
+    if (data.error) addAiMsg('⚠ Hata: ' + data.error);
+    refreshVault();
+    refreshChats();
+  } catch (e) {
+    hideThinking();
+    addAiMsg('⚠ Bağlantı hatası: ' + e.message);
+  }
+}
+
+document.getElementById('btn-send').onclick = sendMessage;
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+function showConfirm(cmd) {
+  state.pendingCmd = cmd;
+  document.getElementById('confirm-cmd').textContent = '$ ' + cmd;
+  document.getElementById('confirm-overlay').classList.remove('hidden');
+}
+document.getElementById('btn-confirm-yes').onclick = async () => {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+  if (state.pendingCmd) {
+    const res = await API.confirmCommand(state.pendingCmd);
+    addCmdMsg(state.pendingCmd, res.output || '');
+    state.pendingCmd = null;
+  }
+};
+document.getElementById('btn-confirm-no').onclick = () => {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+  state.pendingCmd = null;
+  addAiMsg('Komut iptal edildi.');
+};
+
+document.getElementById('btn-allow-toggle').onclick = async () => {
+  const res = await API.toggleAllow();
+  state.allowAll = res.allow_all;
+  const btn = document.getElementById('btn-allow-toggle');
+  if (state.allowAll) { btn.textContent = '⚡ İzin: Açık'; btn.style.color = '#22c55e'; btn.style.borderColor = '#22c55e'; }
+  else { btn.textContent = '⚡ İzin: Kapalı'; btn.style.color = '#8b879a'; btn.style.borderColor = '#2a2833'; }
+};
+
+function statColor(pct) { if (pct > 85) return '#ef4444'; if (pct >= 60) return '#eab308'; return '#22c55e'; }
+async function refreshStats() {
+  try {
+    const s = await API.getStats();
+    for (const key of ['cpu','ram','disk']) {
+      const val = Math.round(s[key] || 0);
+      document.getElementById(`${key}-val`).textContent = val + '%';
+      const bar = document.getElementById(`${key}-bar`);
+      bar.style.width = val + '%';
+      bar.style.background = statColor(val);
+    }
+  } catch (e) { console.warn('stats fetch failed', e); }
+}
+
+async function startMainScreen() {
+  tickClock();
+  setInterval(tickClock, 30000);
+
+  const chatsData = await API.getChats();
+  if (chatsData.chats && chatsData.chats.length > 0) {
+    await selectChat(chatsData.chats[0].id);
+  } else {
+    const res = await API.newChat();
+    state.activeChatId = res.id;
+  }
+
+  refreshVault();
+  refreshChats();
+  refreshStats();
+  setInterval(refreshStats, 5000);
+  document.getElementById('chat-input').focus();
+}
+
+const PROVIDER_LABELS = {
+  openrouter: 'OpenRouter', anthropic: 'Anthropic', nvidia: 'NVIDIA',
+  ollama: 'Yerel', lmstudio: 'Yerel', custom: 'Özel',
+};
+
+async function init() {
+  renderModeList();
+  updateModeVisibility();
+  renderPerms();
+  renderBlockedCmds();
+
+  try {
+    const cfg = await API.getConfig();
+    if (cfg.provider && cfg.model) {
+      const label = PROVIDER_LABELS[cfg.provider] || cfg.provider;
+      document.getElementById('model-active').textContent = `${label} · ${cfg.model}`;
+      document.getElementById('screen-setup').classList.add('hidden');
+      document.getElementById('screen-main').classList.remove('hidden');
+      await startMainScreen();
+    } else {
+      document.getElementById('screen-setup').classList.remove('hidden');
+    }
+  } catch (e) {
+    console.warn('config fetch failed, showing setup', e);
+    document.getElementById('screen-setup').classList.remove('hidden');
+  }
+}
+
+window.addEventListener('pywebviewready', init);
+document.addEventListener('DOMContentLoaded', () => {
+  if (typeof pywebview === 'undefined') setTimeout(init, 800);
+});
+</script>
+</body>
+</html>
