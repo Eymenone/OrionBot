@@ -1,6 +1,6 @@
 # OrionBot
 
-Get up and running with Claude, GPT, Gemini, Llama, and other models through a native Windows desktop app — no browser tab, no localhost.
+Get up and running with Claude, GPT, Gemini, Llama, and other models through a native Windows desktop app —
 
 > **Note:** This is a demo / preview build, not the final product. Things will change. NVIDIA NIM and OpenRouter have been tested; the local-model (Ollama / LM Studio) path has not been tested yet — use it at your own discretion for now.
 
